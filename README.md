@@ -25,6 +25,14 @@ Sanipy takes a different approach:
 
 ## Installation
 
+For now (alpha version), install directly from GitHub:
+
+```bash
+pip install git+https://github.com/anormalguy96/sanipy.git@main
+```
+
+Once published on PyPI, you will be able to install it via:
+
 ```bash
 pip install sanipy
 ```
