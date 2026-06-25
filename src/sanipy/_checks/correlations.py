@@ -15,6 +15,7 @@ from sanipy.diagnostics import (
     SEVERITY_MEDIUM,
     DiagnosticIssue,
 )
+from sanipy._utils.dataframe_ops import safe_get_series
 from sanipy._utils.type_detection import get_numeric_columns
 
 
@@ -32,8 +33,16 @@ def check_correlations(
 
     numeric_cols = get_numeric_columns(df)
 
+    # Use unique column labels to avoid checking duplicate columns multiple times
+    unique_numeric_cols = []
+    seen = set()
+    for col in numeric_cols:
+        if col not in seen:
+            seen.add(col)
+            unique_numeric_cols.append(col)
+
     # Remove target from feature list (we handle it separately)
-    feature_cols = [c for c in numeric_cols if c != target]
+    feature_cols = [c for c in unique_numeric_cols if c != target]
 
     if len(feature_cols) < 2:
         return issues
@@ -61,8 +70,13 @@ def check_correlations(
         ))
         return issues
 
+    # Build a clean DataFrame with unique column names
+    clean_feature_df = pd.DataFrame({
+        col: safe_get_series(df, col) for col in feature_cols
+    })
+
     # ── Feature-feature correlation ──────────────────────────────
-    corr_matrix = df[feature_cols].corr(method="pearson")
+    corr_matrix = clean_feature_df.corr(method="pearson")
 
     seen_pairs: set[tuple[str, str]] = set()
     for i, col_a in enumerate(feature_cols):
@@ -72,7 +86,10 @@ def check_correlations(
                 continue
             seen_pairs.add(pair)
 
-            corr_val = corr_matrix.loc[col_a, col_b]
+            try:
+                corr_val = corr_matrix.loc[col_a, col_b]
+            except KeyError:
+                continue
             if pd.isna(corr_val):
                 continue
 
@@ -104,44 +121,46 @@ def check_correlations(
         target is not None
         and target in df.columns
         and task == "regression"
-        and pd.api.types.is_numeric_dtype(df[target])
     ):
-        target_series = df[target]
-        for col in feature_cols:
-            try:
-                corr_val = float(df[col].corr(target_series))
-            except (ValueError, TypeError):
-                continue
-            if pd.isna(corr_val):
-                continue
+        target_series = safe_get_series(df, target)
+        if pd.api.types.is_numeric_dtype(target_series):
+            for col in feature_cols:
+                try:
+                    feat_series = safe_get_series(df, col)
+                    corr_val = float(feat_series.corr(target_series))
+                except (ValueError, TypeError):
+                    continue
+                if pd.isna(corr_val):
+                    continue
 
-            abs_corr = abs(corr_val)
+                abs_corr = abs(corr_val)
 
-            # Very high — possible leakage (handled by leakage module,
-            # but we note it here too)
-            if abs_corr >= config.leakage_correlation_threshold:
-                continue  # Leakage module handles this
+                # Very high — possible leakage (handled by leakage module,
+                # but we note it here too)
+                if abs_corr >= config.leakage_correlation_threshold:
+                    continue  # Leakage module handles this
 
-            # Moderate-to-high correlation: informational
-            if abs_corr >= 0.7:
-                issues.append(DiagnosticIssue(
-                    id=f"target-corr-{col}",
-                    title=(
-                        f'Feature "{col}" has strong correlation with '
-                        f'target "{target}" (r={corr_val:.3f}).'
-                    ),
-                    severity=SEVERITY_INFO,
-                    category=CATEGORY_CORRELATION,
-                    columns=[col, target],
-                    evidence={
-                        "correlation": round(corr_val, 4),
-                    },
-                    recommendation=(
-                        f'"{col}" is strongly correlated with the target. '
-                        "This may be a useful feature -- verify it is not "
-                        "leaking future information."
-                    ),
-                    confidence=CONFIDENCE_MEDIUM,
-                ))
+                # Moderate-to-high correlation: informational
+                if abs_corr >= 0.7:
+                    issues.append(DiagnosticIssue(
+                        id=f"target-corr-{col}",
+                        title=(
+                            f'Feature "{col}" has strong correlation with '
+                            f'target "{target}" (r={corr_val:.3f}).'
+                        ),
+                        severity=SEVERITY_INFO,
+                        category=CATEGORY_CORRELATION,
+                        columns=[col, target],
+                        evidence={
+                            "correlation": round(corr_val, 4),
+                        },
+                        recommendation=(
+                            f'"{col}" is strongly correlated with the target. '
+                            "This may be a useful feature -- verify it is not "
+                            "leaking future information."
+                        ),
+                        confidence=CONFIDENCE_MEDIUM,
+                    ))
 
     return issues
+

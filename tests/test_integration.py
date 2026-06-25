@@ -129,3 +129,18 @@ def test_export_roundtrip(tmp_path):
     txt_path = tmp_path / "report.txt"
     report.save(txt_path)
     assert txt_path.exists()
+
+
+def test_version_consistency():
+    """Verify sanipy.__version__ matches version in pyproject.toml."""
+    import sanipy
+    from pathlib import Path
+    import re
+
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    content = pyproject_path.read_text(encoding="utf-8")
+    match = re.search(r'version\s*=\s*"([^"]+)"', content)
+    assert match is not None, "Could not find version in pyproject.toml"
+    pyproject_version = match.group(1)
+    assert sanipy.__version__ == pyproject_version
+

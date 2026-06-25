@@ -16,6 +16,7 @@ from sanipy.diagnostics import (
     SEVERITY_MEDIUM,
     DiagnosticIssue,
 )
+from sanipy._utils.dataframe_ops import safe_get_series
 from sanipy._utils.text_formatting import pct
 
 
@@ -24,7 +25,13 @@ def _detect_task(
     config: SanipyConfig,
 ) -> str:
     """Auto-detect whether the target suggests classification or regression."""
-    n_unique = target_series.nunique(dropna=True)
+    try:
+        is_inf = np.isinf(target_series)
+        series_clean = target_series[~is_inf]
+    except (TypeError, ValueError):
+        series_clean = target_series
+
+    n_unique = series_clean.nunique(dropna=True)
     if n_unique <= config.auto_detect_task_max_classes:
         return "classification"
     return "regression"
@@ -47,7 +54,7 @@ def check_target_analysis(
     if target is None or target not in df.columns:
         return issues, task
 
-    col = df[target]
+    col = safe_get_series(df, target)
     n_rows = len(df)
 
     # Missing target values
@@ -102,6 +109,16 @@ def check_target_analysis(
 
     non_null = col.dropna()
     if len(non_null) == 0:
+        issues.append(DiagnosticIssue(
+            id="target-all-null",
+            title=f'Target column "{target}" is entirely empty/null.',
+            severity=SEVERITY_CRITICAL,
+            category=CATEGORY_TARGET,
+            columns=[target],
+            evidence={"n_non_null": 0},
+            recommendation="Please provide a target column with non-null values for training.",
+            confidence=CONFIDENCE_HIGH,
+        ))
         return issues, resolved_task
 
     if resolved_task == "classification":
@@ -122,6 +139,9 @@ def _check_classification_target(
 
     value_counts = series.value_counts(normalize=True)
     n_classes = len(value_counts)
+    if n_classes == 0:
+        return issues
+
     majority_frac = float(value_counts.iloc[0])
     majority_class = value_counts.index[0]
 
@@ -236,11 +256,33 @@ def _check_regression_target(
         ))
         return issues
 
-    # Skewness
-    skew = float(series.skew())
-    if abs(skew) >= config.target_skewness_threshold:
+    # Check for constant regression target
+    n_unique = series.nunique()
+    if n_unique <= 1:
+        issues.append(DiagnosticIssue(
+            id="target-constant-regression",
+            title=f'Regression target "{target}" is constant (only {n_unique} unique value).',
+            severity=SEVERITY_CRITICAL,
+            category=CATEGORY_TARGET,
+            columns=[target],
+            evidence={"n_unique": n_unique},
+            recommendation="A regression target should have more than 1 unique value.",
+            confidence=CONFIDENCE_HIGH,
+        ))
+        return issues
+
+    # Skewness calculation (excluding infinities)
+    try:
+        is_inf = np.isinf(series)
+        series_clean = series[~is_inf]
+    except (TypeError, ValueError):
+        series_clean = series
+
+    skew = series_clean.skew()
+    if pd.notna(skew) and abs(float(skew)) >= config.target_skewness_threshold:
+        skew = float(skew)
         # Suggest log transform only for positive values
-        all_positive = bool((series > 0).all())
+        all_positive = bool((series_clean > 0).all()) if not series_clean.empty else False
         if all_positive:
             rec = (
                 f"Target is highly skewed (skewness={skew:.2f}). "
@@ -269,14 +311,16 @@ def _check_regression_target(
             confidence=CONFIDENCE_HIGH,
         ))
 
-    # Outliers in target (IQR method)
-    q1 = float(series.quantile(0.25))
-    q3 = float(series.quantile(0.75))
+    # Outliers in target (IQR method using clean series fences)
+    q1 = float(series_clean.quantile(0.25))
+    q3 = float(series_clean.quantile(0.75))
     iqr = q3 - q1
     if iqr > 0:
         lower = q1 - config.outlier_iqr_multiplier * iqr
         upper = q3 + config.outlier_iqr_multiplier * iqr
-        n_outliers = int(((series < lower) | (series > upper)).sum())
+        # Outliers include infinities, if present
+        outlier_mask = (series < lower) | (series > upper)
+        n_outliers = int(outlier_mask.sum())
         if n_outliers > 0:
             frac = n_outliers / len(series)
             issues.append(DiagnosticIssue(
@@ -304,3 +348,4 @@ def _check_regression_target(
             ))
 
     return issues
+

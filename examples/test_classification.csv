@@ -1,0 +1,6 @@
+client_id,age,income,region,churn
+101,34.0,50000.0,North,0
+111,28.0,45000.0,North,0
+112,99.0,80000.0,Central,1
+113,33.0,52000.0,East,1
+110,48.0,95000.0,South,1

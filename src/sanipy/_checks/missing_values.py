@@ -15,6 +15,7 @@ from sanipy.diagnostics import (
     SEVERITY_MEDIUM,
     DiagnosticIssue,
 )
+from sanipy._utils.dataframe_ops import safe_get_series
 from sanipy._utils.text_formatting import pct
 
 
@@ -28,11 +29,19 @@ def check_missing_values(
     if df.empty:
         return issues
 
-    missing_counts = df.isnull().sum()
     n_rows = len(df)
 
+    # Use unique column labels to avoid checking duplicate columns multiple times
+    unique_cols = []
+    seen = set()
     for col in df.columns:
-        n_missing = int(missing_counts[col])
+        if col not in seen:
+            seen.add(col)
+            unique_cols.append(col)
+
+    for col in unique_cols:
+        series = safe_get_series(df, col)
+        n_missing = int(series.isnull().sum())
         if n_missing == 0:
             continue
 
@@ -88,3 +97,4 @@ def check_missing_values(
         ))
 
     return issues
+

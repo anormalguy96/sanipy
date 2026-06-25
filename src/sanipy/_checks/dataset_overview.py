@@ -38,7 +38,7 @@ def check_overview(
         "column_types": type_counts,
     }
 
-    # Empty dataset
+    # Empty dataset (0 rows)
     if n_rows == 0:
         issues.append(DiagnosticIssue(
             id="overview-001",
@@ -49,6 +49,20 @@ def check_overview(
             recommendation="Provide a non-empty dataset.",
             confidence=CONFIDENCE_HIGH,
         ))
+
+    # No columns
+    if n_cols == 0:
+        issues.append(DiagnosticIssue(
+            id="overview-004",
+            title="Dataset has no columns.",
+            severity=SEVERITY_CRITICAL,
+            category=CATEGORY_OVERVIEW,
+            evidence={"columns": 0},
+            recommendation="Provide a dataset with at least one column.",
+            confidence=CONFIDENCE_HIGH,
+        ))
+
+    if n_rows == 0 or n_cols == 0:
         return issues, dataset_info
 
     # Very small dataset
@@ -82,16 +96,5 @@ def check_overview(
             confidence=CONFIDENCE_HIGH,
         ))
 
-    # No columns
-    if n_cols == 0:
-        issues.append(DiagnosticIssue(
-            id="overview-004",
-            title="Dataset has no columns.",
-            severity=SEVERITY_CRITICAL,
-            category=CATEGORY_OVERVIEW,
-            evidence={"columns": 0},
-            recommendation="Provide a dataset with at least one column.",
-            confidence=CONFIDENCE_HIGH,
-        ))
 
     return issues, dataset_info

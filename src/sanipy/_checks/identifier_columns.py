@@ -14,6 +14,7 @@ from sanipy.diagnostics import (
     SEVERITY_MEDIUM,
     DiagnosticIssue,
 )
+from sanipy._utils.dataframe_ops import safe_get_series
 from sanipy._utils.text_formatting import pct
 
 
@@ -29,9 +30,10 @@ _ID_SUFFIX_RE = re.compile(
 )
 
 
-def _name_looks_like_id(col_name: str, config: SanipyConfig) -> bool:
+def _name_looks_like_id(col_name: str | int | float | bool | tuple, config: SanipyConfig) -> bool:
     """Heuristic: does the column name suggest an ID?"""
-    lower = col_name.strip().lower()
+    col_str = str(col_name)
+    lower = col_str.strip().lower()
 
     # Exact match against known ID names
     if lower in _EXACT_ID_NAMES:
@@ -62,12 +64,21 @@ def check_identifier_columns(
 
     n_rows = len(df)
 
+    # Use unique column labels to avoid checking duplicate columns multiple times
+    unique_cols = []
+    seen = set()
     for col in df.columns:
+        if col not in seen:
+            seen.add(col)
+            unique_cols.append(col)
+
+    for col in unique_cols:
         # Never flag the target column as an ID
         if col == target:
             continue
 
-        uniqueness = df[col].nunique(dropna=True) / n_rows if n_rows > 0 else 0
+        series = safe_get_series(df, col)
+        uniqueness = series.nunique(dropna=True) / n_rows if n_rows > 0 else 0
         name_match = _name_looks_like_id(col, config)
 
         is_id = False
@@ -87,8 +98,8 @@ def check_identifier_columns(
             # Only flag non-numeric or integer columns (strings with many
             # unique values are likely IDs; floats with high uniqueness
             # are just continuous features).
-            if df[col].dtype == "object" or (
-                pd.api.types.is_integer_dtype(df[col])
+            if series.dtype == "object" or (
+                pd.api.types.is_integer_dtype(series)
             ):
                 is_id = True
                 confidence = CONFIDENCE_MEDIUM
@@ -117,3 +128,4 @@ def check_identifier_columns(
             ))
 
     return issues
+

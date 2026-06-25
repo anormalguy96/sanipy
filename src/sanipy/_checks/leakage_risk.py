@@ -21,6 +21,9 @@ from sanipy.diagnostics import (
 )
 
 
+from sanipy._utils.dataframe_ops import safe_get_series
+
+
 # ── Suspicious column-name patterns ─────────────────────────────────
 # These patterns, combined with high target correlation, suggest that
 # the column may encode information that would not be available at
@@ -44,9 +47,10 @@ _LEAKAGE_NAME_PATTERNS: list[re.Pattern[str]] = [
 ]
 
 
-def _name_is_suspicious(col_name: str) -> bool:
+def _name_is_suspicious(col_name: str | int | float | bool | tuple) -> bool:
     """Check if a column name matches leakage-risk patterns."""
-    return any(p.search(col_name) for p in _LEAKAGE_NAME_PATTERNS)
+    col_str = str(col_name)
+    return any(p.search(col_str) for p in _LEAKAGE_NAME_PATTERNS)
 
 
 def check_possible_leakage_risk(
@@ -67,21 +71,30 @@ def check_possible_leakage_risk(
     if target is None or target not in df.columns or df.empty:
         return issues
 
-    target_series = df[target]
+    target_series = safe_get_series(df, target)
     is_numeric_target = pd.api.types.is_numeric_dtype(target_series)
 
+    # Use unique column labels to avoid checking duplicate columns multiple times
+    unique_cols = []
+    seen = set()
     for col in df.columns:
+        if col not in seen:
+            seen.add(col)
+            unique_cols.append(col)
+
+    for col in unique_cols:
         if col == target:
             continue
 
+        series = safe_get_series(df, col)
         suspicious_name = _name_is_suspicious(col)
 
         # Correlation-based check (only for numeric columns with numeric target)
         high_corr = False
         corr_val = None
-        if is_numeric_target and pd.api.types.is_numeric_dtype(df[col]):
+        if is_numeric_target and pd.api.types.is_numeric_dtype(series):
             try:
-                corr_val = float(df[col].corr(target_series))
+                corr_val = float(series.corr(target_series))
             except (ValueError, TypeError):
                 corr_val = None
 
@@ -165,3 +178,4 @@ def check_possible_leakage_risk(
             ))
 
     return issues
+

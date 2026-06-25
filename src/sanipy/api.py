@@ -7,6 +7,7 @@ import pandas as pd
 from sanipy.config import SanipyConfig
 from sanipy._engine.runner import run_engine_checks
 from sanipy.reports import DatasetReport
+from sanipy.comparison import compare_train_test, compare_datasets
 
 
 def check_dataset(
@@ -51,3 +52,4 @@ def scan_dataset(
         A :class:`DatasetReport` containing all detected issues.
     """
     return run_engine_checks(df=df, target=target, task=task, config=config)
+

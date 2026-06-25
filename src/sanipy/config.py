@@ -99,3 +99,125 @@ class SanipyConfig:
     # ── Task auto-detection ─────────────────────────────────────────
     auto_detect_task_max_classes: int = 20
     """If target has ≤ this many unique values, assume classification."""
+
+    # ── Train/Test Comparison ───────────────────────────────────────
+    comparison_missingness_shift_threshold: float = 0.20
+    """Max absolute difference in missing rate between splits before warning."""
+
+    comparison_unseen_category_row_threshold: float = 0.05
+    """Row fraction threshold for unseen categories to determine severity."""
+
+    comparison_numeric_relative_shift_threshold: float = 0.30
+    """Relative difference in numeric summary stats to trigger a shift warning."""
+
+    comparison_target_class_shift_threshold: float = 0.15
+    """Max class proportion difference between splits before warning."""
+
+    comparison_outside_range_threshold: float = 0.01
+    """Fraction of test values outside training range to trigger a warning."""
+
+    comparison_max_unseen_examples: int = 10
+    """Maximum number of unseen category examples to include in evidence."""
+
+    comparison_max_rows_for_overlap_check: int = 100_000
+    """Skip exact row overlap checks if test split exceeds this size."""
+
+    # ── Developer Settings ──────────────────────────────────────────
+    fail_fast: bool = False
+    """If True, raise unexpected internal check exceptions immediately."""
+
+    def __post_init__(self) -> None:
+        from sanipy.exceptions import InvalidConfigError
+
+        # Percentage parameters (between 0.0 and 1.0 inclusive)
+        pct_fields = {
+            "missing_low_threshold": self.missing_low_threshold,
+            "missing_medium_threshold": self.missing_medium_threshold,
+            "missing_high_threshold": self.missing_high_threshold,
+            "missing_critical_threshold": self.missing_critical_threshold,
+            "duplicate_warn_threshold": self.duplicate_warn_threshold,
+            "near_constant_threshold": self.near_constant_threshold,
+            "id_uniqueness_threshold": self.id_uniqueness_threshold,
+            "imbalance_majority_threshold": self.imbalance_majority_threshold,
+            "imbalance_critical_threshold": self.imbalance_critical_threshold,
+            "outlier_warn_threshold": self.outlier_warn_threshold,
+            "high_correlation_threshold": self.high_correlation_threshold,
+            "leakage_correlation_threshold": self.leakage_correlation_threshold,
+            "comparison_missingness_shift_threshold": self.comparison_missingness_shift_threshold,
+            "comparison_unseen_category_row_threshold": self.comparison_unseen_category_row_threshold,
+            "comparison_target_class_shift_threshold": self.comparison_target_class_shift_threshold,
+            "comparison_outside_range_threshold": self.comparison_outside_range_threshold,
+        }
+
+        for name, value in pct_fields.items():
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                raise InvalidConfigError(
+                    f"{name} must be numeric, got {type(value).__name__}."
+                )
+            if not (0.0 <= float(value) <= 1.0):
+                raise InvalidConfigError(
+                    f"{name} must be between 0.0 and 1.0 (inclusive), got {value}."
+                )
+
+        # Ordering check for missing values
+        if not (self.missing_low_threshold < self.missing_medium_threshold <
+                self.missing_high_threshold < self.missing_critical_threshold):
+            raise InvalidConfigError(
+                "Missing value thresholds must be strictly ordered: "
+                "missing_low_threshold < missing_medium_threshold < "
+                "missing_high_threshold < missing_critical_threshold."
+            )
+
+        # Positive numeric parameters (> 0)
+        pos_num_fields = {
+            "outlier_iqr_multiplier": self.outlier_iqr_multiplier,
+            "skewness_warn_threshold": self.skewness_warn_threshold,
+            "target_skewness_threshold": self.target_skewness_threshold,
+            "comparison_numeric_relative_shift_threshold": self.comparison_numeric_relative_shift_threshold,
+        }
+        for name, value in pos_num_fields.items():
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                raise InvalidConfigError(
+                    f"{name} must be numeric, got {type(value).__name__}."
+                )
+            if float(value) <= 0:
+                raise InvalidConfigError(
+                    f"{name} must be strictly positive, got {value}."
+                )
+
+        # Positive integer parameters (> 0)
+        pos_int_fields = {
+            "high_cardinality_threshold": self.high_cardinality_threshold,
+            "max_columns_for_correlation": self.max_columns_for_correlation,
+            "max_rows_for_expensive_checks": self.max_rows_for_expensive_checks,
+            "auto_detect_task_max_classes": self.auto_detect_task_max_classes,
+            "comparison_max_unseen_examples": self.comparison_max_unseen_examples,
+            "comparison_max_rows_for_overlap_check": self.comparison_max_rows_for_overlap_check,
+        }
+        for name, value in pos_int_fields.items():
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise InvalidConfigError(
+                    f"{name} must be an integer, got {type(value).__name__}."
+                )
+            if value <= 0:
+                raise InvalidConfigError(
+                    f"{name} must be strictly positive, got {value}."
+                )
+
+
+        # Validate types for id_name_patterns
+        if not isinstance(self.id_name_patterns, tuple):
+            raise InvalidConfigError(
+                "id_name_patterns must be a tuple of strings."
+            )
+        for pattern in self.id_name_patterns:
+            if not isinstance(pattern, str):
+                raise InvalidConfigError(
+                    "id_name_patterns items must be strings."
+                )
+
+        # Validate types for fail_fast
+        if not isinstance(self.fail_fast, bool):
+            raise InvalidConfigError(
+                f"fail_fast must be a boolean, got {type(self.fail_fast).__name__}."
+            )

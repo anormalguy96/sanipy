@@ -1,0 +1,11 @@
+customer_id,age,income,region,loyalty_score,is_active,churn_outcome,churn
+1,25,50000,North,4.5,1,0,0
+2,34,60000,South,3.8,1,0,0
+3,45,80000,East,4.2,1,0,0
+4,23,45000,West,,1,1,1
+5,56,120000,North,4.9,1,0,0
+6,22,35000,South,2.1,1,1,1
+7,39,70000,East,4.0,1,0,0
+8,30,55000,West,3.5,1,0,0
+9,48,95000,North,4.6,1,0,0
+10,50,110000,South,4.8,1,0,0

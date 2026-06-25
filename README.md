@@ -1,5 +1,10 @@
 # Sanipy
 
+[![CI](https://github.com/anormalguy96/sanipy/actions/workflows/ci.yml/badge.svg)](https://github.com/anormalguy96/sanipy/actions)
+![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0a3-orange)](https://pypi.org/project/sanipy/)
+
 **Lightweight sanity checks for ML datasets.**
 
 Sanipy helps AI/ML engineers, data scientists, and Python developers quickly detect common dataset and machine learning pipeline problems **before training a model**.
@@ -184,6 +189,114 @@ report.save("report.txt")    # Plain text
 
 ---
 
+## Comparing Train and Test Datasets
+
+Sanipy allows you to compare training and test splits to detect shape inconsistencies, schema mismatches, dtype mismatches, missingness rate shifts, unseen categories, numeric range violations, numeric distribution shifts, target distribution shifts, row overlaps (leakage), and entity ID leaks.
+
+This is a lightweight pre-model split sanity check, not a production drift monitoring tool.
+
+### Python API
+
+```python
+from sanipy import compare_train_test
+
+comparison = compare_train_test(
+    train_df,
+    test_df,
+    target="churn",
+    task="classification",
+)
+print(comparison.summary())
+```
+
+### CLI Example
+
+```bash
+sanipy compare train.csv test.csv --target churn --task classification
+```
+
+### What It Checks
+
+- **Basic split overview**: Row/column shapes, row ratios, empty splits, extremely small test sizes.
+- **Schema mismatch**: Column presence discrepancies, missing target in either split, duplicate names, MultiIndex columns.
+- **Dtype mismatch**: Warns if columns have incompatible dtype categories (numeric, categorical/object/string, datetime, boolean, other).
+- **Missingness shift**: Warns when the missing value rate difference for a column exceeds a threshold (default 20%).
+- **Categorical unseen values**: Warns if the test set has categories never seen in training, with rows affected fraction.
+- **Missing categories from test**: Info check when categories in training are completely absent from test.
+- **Numeric range violations**: Warns if test values fall outside training min/max bounds.
+- **Numeric summary shift**: Compares relative shifts in mean, median, and standard deviation (default 30% threshold).
+- **Target distribution comparison**: Target missingness rates, class proportion differences (classification), or regression summary stat shifts.
+- **Train/Test row overlap**: Identifies exact duplicate rows between splits (skipped for performance above 100K rows).
+- **Identifier overlap**: Detects overlapping values in entity ID-like columns indicating split leakages.
+
+### What It Does NOT Do
+
+- It is **not** a production data drift monitoring tool (no statistical hypothesis testing like KS-test, PSI, Jensen-Shannon, Evidently-style monitoring).
+- It does **not** generate dashboards or HTML reports.
+- It does **not** perform automatic cleaning or model evaluation.
+- It does **not** support GPU/deep learning dependencies or non-Pandas engines (like Spark/Dask/Polars).
+
+---
+
+## Command Line Usage
+
+Sanipy provides a clean command-line interface (CLI) to run checks directly on CSV datasets from your terminal. Under the hood, it uses the exact same validation engine as the Python API.
+
+### Basic Syntax
+```bash
+sanipy check <path_to_csv> [options]
+```
+
+### Examples
+```bash
+# 1. Run checks on data.csv and print a plain-text summary
+sanipy check data.csv
+
+# 2. Specify target column for supervised task auto-detection
+sanipy check data.csv --target churn
+
+# 3. Explicitly set target and ML task
+sanipy check data.csv --target churn --task classification
+sanipy check data.csv --target price --task regression
+
+# 4. Print report as JSON or Markdown to stdout
+sanipy check data.csv --target churn --format json
+sanipy check data.csv --target churn --format markdown
+
+# 5. Export report directly to a file (prints a short confirmation message)
+sanipy check data.csv --target churn --format json --out report.json
+sanipy check data.csv --target churn --format markdown --out report.md
+
+# 6. CI/CD Gate: Exit with code 1 if any high or critical issues are found
+sanipy check data.csv --target churn --fail-on high
+
+# 7. Enable fail-fast checks (raises unexpected errors instantly for debugging)
+sanipy check data.csv --target churn --fail-fast
+
+# 8. Show tracebacks on unexpected errors
+sanipy check data.csv --target churn --debug
+```
+
+### CLI Options
+- `file` (Positional): Path to local CSV file. *Note: Only `.csv` files are supported.*
+- `--target TARGET`: Target column name.
+- `--task {classification,regression}`: Machine learning task.
+- `--format {text,json,markdown}`: Output format (default: `text`).
+- `--out PATH`: Output path to write the report.
+- `--fail-fast`: Passes `fail_fast=True` into configuration.
+- `--fail-on {low,medium,high,critical}`: Exit with code `1` if any issue severity matches or exceeds the specified level.
+- `--debug`: Enable standard tracebacks on unexpected errors.
+- `--version`: Print installed Sanipy version.
+- `--help` / `check --help`: Show helpful command hints.
+
+### Exit Codes
+The CLI utilizes strict exit codes for integration pipelines:
+- `0` = Command completed successfully.
+- `1` = Completed successfully, but failed the quality gate (triggered by `--fail-on`) OR encountered an unexpected internal error.
+- `2` = Invalid CLI usage (e.g. wrong arguments, missing subcommand), file error (missing/is a directory), CSV parsing failure, or standard Sanipy validation exceptions (`SanipyError`).
+
+---
+
 ## Dataset Score
 
 Sanipy computes a heuristic health score from 0 to 100:
@@ -213,9 +326,45 @@ Sanipy is designed for **16 GB RAM, CPU-only machines**:
 - No O(n^2) algorithms on rows
 - Works well on: 1K, 10K, 100K rows x 100 columns
 
+## Error Handling & Validation
+
+Sanipy follows a strict, professional design for robustness and safety:
+
+### 1. Invalid API Usage (Raises Exceptions)
+Improper usage of the public API raises specific, clear exceptions:
+- `InvalidDatasetError` (inherits from `TypeError`): Raised if the input `df` is not a `pandas.DataFrame`.
+- `InvalidTargetError` (inherits from `TypeError`): Raised if `target` has an invalid type (e.g. not string-like).
+- `InvalidTaskError` (inherits from `ValueError`): Raised if `task` is not `"classification"`, `"regression"`, or `None`.
+- `InvalidConfigError` (inherits from `ValueError`): Raised if `SanipyConfig` is instantiated with invalid values (out-of-bounds percentages, negative integers, or unordered thresholds).
+- `ReportExportError` (inherits from `ValueError`): Raised if report file export fails due to unsupported extensions or write failures.
+
+### 2. Dataset Quality Problems (Reported as Issues)
+Data problems do **not** crash the library. Instead, they are reported as `DiagnosticIssue` objects in the returned `DatasetReport`:
+- Missing values, duplicate rows, constant columns
+- Target column missing from the DataFrame
+- All-null target column or single-class classification target
+- Non-string column names (analyzed safely without crashing)
+
+### 3. Safe Check Execution & Debug Mode
+By default, if an individual check encounters an unexpected error, Sanipy does **not** fail the entire run. It catches the error, appends an informational issue with category `"internal_error"`, and continues executing other checks.
+
+For debugging and developer diagnostics:
+```python
+# Fail-fast mode: raises unexpected check exceptions immediately
+config = SanipyConfig(fail_fast=True)
+report = check_dataset(df, target="churn", config=config)
+```
+
+### 4. Known Alpha Limitations
+- **MultiIndex Columns**: MultiIndex layouts are not fully supported and will trigger an overview info diagnostic issue.
+- **Large Datasets**: Datasets exceeding `max_rows_for_expensive_checks` (default 100K) are automatically sampled for performance.
+- **Multi-collinearity Limits**: Very wide datasets with many columns will skip correlation calculations unless `max_columns_for_correlation` is adjusted.
+- **Heuristic Errors**: Checks are heuristic and may produce false positives; verify warnings before taking action.
+
 ---
 
 ## Heuristic Disclaimer
+
 
 Sanipy uses heuristics, not proven theorems. It may produce:
 
@@ -230,8 +379,8 @@ All warnings use cautious language ("possible issue", "may", "consider"). The go
 
 ### Beta (planned)
 
-- [ ] CLI: `sanipy check data.csv --target churn`
-- [ ] Train/test comparison: `compare_train_test(train_df, test_df)`
+- [x] CLI: `sanipy check data.csv --target churn`
+- [x] Train/test comparison: `compare_train_test(train_df, test_df)`
 - [ ] Simple drift detection (KS test, PSI)
 - [ ] HTML report export
 - [ ] Polars DataFrame support

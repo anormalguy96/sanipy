@@ -28,3 +28,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unit and integration tests (92 passing tests).
 - Realistic synthetic datasets and task examples in `examples/`.
 - GitHub Actions CI workflow configuration.
+
+### Added
+- Custom exceptions hierarchy for public API errors (`SanipyError`, `InvalidDatasetError`, `InvalidTargetError`, `InvalidTaskError`, `InvalidConfigError`, `ReportExportError`).
+- Config threshold validation checks in `SanipyConfig` for strict range, ordering, and type matching.
+- Comprehensive edge-case test suite (`tests/test_edge_cases.py` containing 25+ distinct validation scenarios).
+
+### Changed
+- Refactored orchestrator to catch unexpected failures in individual checks safely and flag them as internal warning diagnostics, preventing total check execution crashes (with configurable debug `fail_fast` option).
+- Hardened all internal checks against edge-cases including duplicate columns, non-string column names, MultiIndex structures, and infinite values (`np.inf`/`-np.inf`).
+- Enabled clean export of NumPy data types, datetimes, NaNs, and Pandas `NA`/`NaT` types to dict, JSON, and Markdown formats.
+
+### [0.1.0a2] - 2026-06-26
+
+### Added
+- Command Line Interface (CLI) supporting `sanipy check` subcommand.
+- Terminal output formatting options (text, json, markdown).
+- Integration pipeline CI/CD quality gate command-line flags (`--fail-on`, `--fail-fast`, `--debug`).
+- Automated tests verifying CLI arguments, parsing, and execution.
+
+### [0.1.0a3] - 2026-06-26
+
+### Added
+- Train/Test Split Diagnostics feature with `compare_train_test()` and `compare_datasets()` APIs.
+- Dedicated `DatasetComparisonReport` model mirroring existing serialization interfaces.
+- 11 split validation checks:
+  - Basic split overview and row ratio analysis.
+  - Schema mismatch (missing/extra features, missing targets).
+  - Dtype mismatch across splits.
+  - Missingness shift detection.
+  - Unseen categories in test sets.
+  - Missing categories from test sets.
+  - Numeric range violations.
+  - Numeric summary shifts (mean, median, std shifts).
+  - Target distribution comparison (classification proportion shifts & regression summary shifts).
+  - Exact row duplicates/leakage check with hashing-based performance limits.
+  - Identifier/entity ID overlap checks.
+- CLI subcommand `sanipy compare` with output formatters, export paths, fail gates, and debugging.
+- Comprehensive API and CLI test suites under `tests/test_comparison.py`, `tests/test_comparison_edge_cases.py`, and `tests/test_cli_compare.py` (totaling 42 new test cases).
+- Target auto-detection logic in dataset comparison.
+
+

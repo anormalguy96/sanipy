@@ -34,3 +34,12 @@ Thumbs.db
 
 # Sanipy reports (user-generated)
 sanipy_report.*
+comparison_report.*
+check_report.*
+*.whl
+*.tar.gz
+
+# Local envs / env vars
+.env
+.env.*
+wheel_smoke_env/

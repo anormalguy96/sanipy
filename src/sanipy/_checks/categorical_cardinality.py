@@ -11,6 +11,7 @@ from sanipy.diagnostics import (
     SEVERITY_MEDIUM,
     DiagnosticIssue,
 )
+from sanipy._utils.dataframe_ops import safe_get_series
 from sanipy._utils.type_detection import get_categorical_columns
 
 
@@ -27,12 +28,21 @@ def check_categorical_cardinality(
 
     cat_cols = get_categorical_columns(df)
 
+    # Use unique column labels to avoid checking duplicate columns multiple times
+    unique_cat_cols = []
+    seen = set()
     for col in cat_cols:
+        if col not in seen:
+            seen.add(col)
+            unique_cat_cols.append(col)
+
+    for col in unique_cat_cols:
         # Don't flag the target column
         if col == target:
             continue
 
-        n_unique = df[col].nunique(dropna=True)
+        series = safe_get_series(df, col)
+        n_unique = series.nunique(dropna=True)
 
         if n_unique > config.high_cardinality_threshold:
             issues.append(DiagnosticIssue(
@@ -47,7 +57,7 @@ def check_categorical_cardinality(
                 evidence={
                     "unique_values": n_unique,
                     "threshold": config.high_cardinality_threshold,
-                    "dtype": str(df[col].dtype),
+                    "dtype": str(series.dtype),
                 },
                 recommendation=(
                     f'Column "{col}" has {n_unique} unique values. '
@@ -59,3 +69,4 @@ def check_categorical_cardinality(
             ))
 
     return issues
+

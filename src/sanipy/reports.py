@@ -20,6 +20,55 @@ from sanipy.diagnostics import (
 )
 
 
+def _json_sanitize(val: Any) -> Any:
+    """Recursively sanitize numpy, pandas, and datetime objects for JSON serialization."""
+    import numpy as np
+    import pandas as pd
+    from datetime import datetime, date
+
+    if val is pd.NA or val is pd.NaT:
+        return None
+
+    # Handle floats (NaN, Inf, -Inf)
+    if isinstance(val, (float, np.floating)):
+        if np.isnan(val):
+            return None
+        if np.isinf(val):
+            return "Infinity" if val > 0 else "-Infinity"
+        return float(val)
+
+    # Handle integers
+    if isinstance(val, (int, np.integer)):
+        return int(val)
+
+    # Handle bools
+    if isinstance(val, (bool, np.bool_)):
+        return bool(val)
+
+    # Handle datetime/date/Timestamp
+    if isinstance(val, (datetime, date, pd.Timestamp)):
+        return val.isoformat()
+
+    # Handle dict
+    if isinstance(val, dict):
+        return {str(k): _json_sanitize(v) for k, v in val.items()}
+
+    # Handle list/tuple/set/ndarray
+    if isinstance(val, (list, tuple, set)):
+        return [_json_sanitize(item) for item in val]
+    if isinstance(val, np.ndarray):
+        return [_json_sanitize(item) for item in val.tolist()]
+
+    # Fallback checking pd.isna
+    try:
+        if pd.isna(val):
+            return None
+    except Exception:
+        pass
+
+    return val
+
+
 class DatasetReport:
     """Dataset health report produced by :func:`check_dataset`.
 
@@ -155,8 +204,8 @@ class DatasetReport:
     # ── Serialization ───────────────────────────────────────────────
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the full report to a dictionary."""
-        return {
+        """Serialize the full report to a dictionary with clean JSON-safe types."""
+        raw_dict = {
             "score": self.score,
             "task": self.task,
             "target": self.target,
@@ -164,12 +213,17 @@ class DatasetReport:
             "total_issues": len(self.issues),
             "issues": [issue.to_dict() for issue in self.issues],
         }
+        return _json_sanitize(raw_dict)
 
     def to_json(self, path: str | Path | None = None, indent: int = 2) -> str:
         """Serialize to JSON. Optionally write to *path*."""
-        data = json.dumps(self.to_dict(), indent=indent, default=str)
+        data = json.dumps(self.to_dict(), indent=indent)
         if path is not None:
-            Path(path).write_text(data, encoding="utf-8")
+            try:
+                Path(path).write_text(data, encoding="utf-8")
+            except Exception as e:
+                from sanipy.exceptions import ReportExportError
+                raise ReportExportError(f"Failed to write JSON report to {path}: {e}") from e
         return data
 
     def to_markdown(self, path: str | Path | None = None) -> str:
@@ -187,11 +241,14 @@ class DatasetReport:
             lines.append("|---|---|")
             for key, value in self.dataset_info.items():
                 label = key.replace("_", " ").title()
-                lines.append(f"| {label} | {value} |")
+                val_escaped = str(value).replace("|", "\\|")
+                lines.append(f"| {label} | {val_escaped} |")
             if self.target:
-                lines.append(f"| Target | `{self.target}` |")
+                target_escaped = str(self.target).replace("|", "\\|")
+                lines.append(f"| Target | `{target_escaped}` |")
             if self.task:
-                lines.append(f"| Task | {self.task} |")
+                task_escaped = str(self.task).replace("|", "\\|")
+                lines.append(f"| Task | {task_escaped} |")
             lines.append("")
 
         lines.append("> **Note:** The dataset score is a heuristic estimate,")
@@ -231,7 +288,11 @@ class DatasetReport:
 
         md = "\n".join(lines)
         if path is not None:
-            Path(path).write_text(md, encoding="utf-8")
+            try:
+                Path(path).write_text(md, encoding="utf-8")
+            except Exception as e:
+                from sanipy.exceptions import ReportExportError
+                raise ReportExportError(f"Failed to write Markdown report to {path}: {e}") from e
         return md
 
     def save(self, path: str | Path) -> None:
@@ -246,12 +307,18 @@ class DatasetReport:
         elif ext == ".md":
             self.to_markdown(p)
         elif ext == ".txt":
-            p.write_text(self.summary(), encoding="utf-8")
+            try:
+                p.write_text(self.summary(), encoding="utf-8")
+            except Exception as e:
+                from sanipy.exceptions import ReportExportError
+                raise ReportExportError(f"Failed to write text report to {path}: {e}") from e
         else:
-            raise ValueError(
+            from sanipy.exceptions import ReportExportError
+            raise ReportExportError(
                 f"Unsupported file extension {ext!r}. "
                 "Use .json, .md, or .txt."
             )
+
 
     # ── Dunder ──────────────────────────────────────────────────────
 
