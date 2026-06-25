@@ -5,23 +5,23 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_DUPLICATES,
     CONFIDENCE_HIGH,
     SEVERITY_HIGH,
     SEVERITY_INFO,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.formatting import pct
+from sanipy._utils.text_formatting import pct
 
 
-def check_duplicates(
+def check_duplicate_rows(
     df: pd.DataFrame,
     config: SanipyConfig,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect fully duplicate rows."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -41,7 +41,7 @@ def check_duplicates(
     else:
         severity = SEVERITY_INFO
 
-    issues.append(Issue(
+    issues.append(DiagnosticIssue(
         id="duplicates-001",
         title=(
             f"Dataset contains {n_duplicates:,} duplicate rows "

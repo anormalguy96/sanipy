@@ -5,23 +5,23 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_SKEWNESS,
     CONFIDENCE_HIGH,
     SEVERITY_INFO,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.dtype import get_numeric_columns
+from sanipy._utils.type_detection import get_numeric_columns
 
 
-def check_skewness(
+def check_distribution_shape(
     df: pd.DataFrame,
     config: SanipyConfig,
     target: str | None = None,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect highly skewed numeric columns."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -60,7 +60,7 @@ def check_skewness(
                 "Yeo-Johnson, or rank-based transformations."
             )
 
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id=f"skewness-{col}",
             title=f'Column "{col}" is highly skewed (skewness={skew:.2f}).',
             severity=severity,

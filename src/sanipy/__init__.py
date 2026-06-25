@@ -10,16 +10,20 @@ Quick start::
 
 from __future__ import annotations
 
+from sanipy.api import check_dataset, scan_dataset
 from sanipy.config import SanipyConfig
-from sanipy.core import check_dataset
-from sanipy.issues import Issue
-from sanipy.report import SanipyReport
+from sanipy.diagnostics import DiagnosticIssue, Issue, Severity
+from sanipy.reports import DatasetReport, SanipyReport
 
 __version__ = "0.1.0"
 __all__ = [
     "check_dataset",
+    "scan_dataset",
     "SanipyConfig",
+    "DatasetReport",
     "SanipyReport",
+    "DiagnosticIssue",
     "Issue",
+    "Severity",
     "__version__",
 ]

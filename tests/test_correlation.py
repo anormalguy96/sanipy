@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from sanipy.checks.correlation import check_correlation
+from sanipy._checks.correlations import check_correlations
 from sanipy.config import SanipyConfig
 
 
@@ -15,7 +15,7 @@ def test_high_correlation_detected():
         "b": x + rng.normal(0, 0.01, 200),  # Nearly identical
         "c": rng.normal(0, 1, 200),  # Independent
     })
-    issues = check_correlation(df, SanipyConfig())
+    issues = check_correlations(df, SanipyConfig())
     assert any("correlation-a-b" == i.id for i in issues)
 
 
@@ -25,7 +25,7 @@ def test_no_correlation():
         "a": rng.normal(0, 1, 200),
         "b": rng.normal(0, 1, 200),
     })
-    issues = check_correlation(df, SanipyConfig())
+    issues = check_correlations(df, SanipyConfig())
     # Independent columns should not be flagged
     corr_issues = [i for i in issues if i.category == "correlation"]
     assert len(corr_issues) == 0
@@ -38,17 +38,17 @@ def test_too_many_columns_skipped():
         columns=[f"col_{i}" for i in range(150)],
     )
     config = SanipyConfig(max_columns_for_correlation=100)
-    issues = check_correlation(df, config)
+    issues = check_correlations(df, config)
     assert any(i.id == "correlation-skipped" for i in issues)
 
 
 def test_single_column():
     df = pd.DataFrame({"a": range(100)})
-    issues = check_correlation(df, SanipyConfig())
+    issues = check_correlations(df, SanipyConfig())
     assert len(issues) == 0
 
 
 def test_empty_df():
     df = pd.DataFrame()
-    issues = check_correlation(df, SanipyConfig())
+    issues = check_correlations(df, SanipyConfig())
     assert len(issues) == 0

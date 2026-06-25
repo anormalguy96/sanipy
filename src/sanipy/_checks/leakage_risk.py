@@ -11,13 +11,13 @@ import re
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_LEAKAGE,
     CONFIDENCE_LOW,
     CONFIDENCE_MEDIUM,
     SEVERITY_HIGH,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
 
 
@@ -49,11 +49,11 @@ def _name_is_suspicious(col_name: str) -> bool:
     return any(p.search(col_name) for p in _LEAKAGE_NAME_PATTERNS)
 
 
-def check_leakage(
+def check_possible_leakage_risk(
     df: pd.DataFrame,
     config: SanipyConfig,
     target: str | None = None,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect columns that may cause target leakage.
 
     Two independent heuristics:
@@ -62,7 +62,7 @@ def check_leakage(
 
     When both match, confidence is higher.
     """
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if target is None or target not in df.columns or df.empty:
         return issues
@@ -91,7 +91,7 @@ def check_leakage(
 
         # Decision matrix
         if suspicious_name and high_corr:
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id=f"leakage-{col}",
                 title=(
                     f'Column "{col}" may cause target leakage --'
@@ -117,7 +117,7 @@ def check_leakage(
                 confidence=CONFIDENCE_MEDIUM,
             ))
         elif high_corr:
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id=f"leakage-corr-{col}",
                 title=(
                     f'Column "{col}" has possible leakage risk --'
@@ -141,7 +141,7 @@ def check_leakage(
                 confidence=CONFIDENCE_LOW,
             ))
         elif suspicious_name:
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id=f"leakage-name-{col}",
                 title=(
                     f'Column "{col}" has a name that may indicate '

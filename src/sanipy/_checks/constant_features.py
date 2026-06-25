@@ -5,22 +5,22 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_CONSTANTS,
     CONFIDENCE_HIGH,
     SEVERITY_HIGH,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.formatting import pct
+from sanipy._utils.text_formatting import pct
 
 
-def check_constant_columns(
+def check_constant_features(
     df: pd.DataFrame,
     config: SanipyConfig,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect columns with zero or near-zero variance."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -32,7 +32,7 @@ def check_constant_columns(
 
         # Fully constant (only 1 unique value or all-null)
         if n_unique <= 1:
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id=f"constant-{col}",
                 title=(
                     f'Column "{col}" is constant '
@@ -64,7 +64,7 @@ def check_constant_columns(
 
             if top_frac >= config.near_constant_threshold:
                 top_value = df[col].value_counts(dropna=True).index[0]
-                issues.append(Issue(
+                issues.append(DiagnosticIssue(
                     id=f"near-constant-{col}",
                     title=(
                         f'Column "{col}" is near-constant --'

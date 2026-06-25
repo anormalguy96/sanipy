@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from sanipy.checks.overview import check_overview
+from sanipy._checks.dataset_overview import check_overview
 from sanipy.config import SanipyConfig
 
 

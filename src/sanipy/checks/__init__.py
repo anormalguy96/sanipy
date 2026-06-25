@@ -1,1 +1,0 @@
-"""Sanipy check modules."""

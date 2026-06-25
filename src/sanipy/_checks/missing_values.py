@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_MISSING,
     CONFIDENCE_HIGH,
     SEVERITY_CRITICAL,
@@ -13,17 +13,17 @@ from sanipy.issues import (
     SEVERITY_INFO,
     SEVERITY_LOW,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.formatting import pct
+from sanipy._utils.text_formatting import pct
 
 
 def check_missing_values(
     df: pd.DataFrame,
     config: SanipyConfig,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect columns with missing values and assign severity."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -72,7 +72,7 @@ def check_missing_values(
                 "Simple imputation or dropping rows may be acceptable."
             )
 
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id=f"missing-{col}",
             title=f'Column "{col}" has {pct(frac)} missing values ({n_missing:,}/{n_rows:,}).',
             severity=severity,

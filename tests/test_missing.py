@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from sanipy.checks.missing import check_missing_values
+from sanipy._checks.missing_values import check_missing_values
 from sanipy.config import SanipyConfig
 
 

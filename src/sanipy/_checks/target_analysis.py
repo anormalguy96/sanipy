@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_TARGET,
     CONFIDENCE_HIGH,
     CONFIDENCE_MEDIUM,
@@ -14,9 +14,9 @@ from sanipy.issues import (
     SEVERITY_HIGH,
     SEVERITY_INFO,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.formatting import pct
+from sanipy._utils.text_formatting import pct
 
 
 def _detect_task(
@@ -30,19 +30,19 @@ def _detect_task(
     return "regression"
 
 
-def check_target(
+def check_target_analysis(
     df: pd.DataFrame,
     target: str | None,
     task: str | None,
     config: SanipyConfig,
-) -> tuple[list[Issue], str | None]:
+) -> tuple[list[DiagnosticIssue], str | None]:
     """Run target-specific sanity checks.
 
     Returns:
         (issues, resolved_task) where resolved_task is the final task
         type (may have been auto-detected).
     """
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if target is None or target not in df.columns:
         return issues, task
@@ -55,7 +55,7 @@ def check_target(
     if n_missing > 0:
         frac = n_missing / n_rows
         severity = SEVERITY_CRITICAL if frac > 0.05 else SEVERITY_HIGH
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-missing",
             title=(
                 f'Target column "{target}" has {n_missing:,} missing values '
@@ -80,7 +80,7 @@ def check_target(
     resolved_task = task
     if resolved_task is None:
         resolved_task = _detect_task(col.dropna(), config)
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-task-auto",
             title=(
                 f'Task auto-detected as "{resolved_task}" based on '
@@ -116,9 +116,9 @@ def _check_classification_target(
     series: pd.Series,
     target: str,
     config: SanipyConfig,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Check class distribution for a classification target."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     value_counts = series.value_counts(normalize=True)
     n_classes = len(value_counts)
@@ -126,7 +126,7 @@ def _check_classification_target(
     majority_class = value_counts.index[0]
 
     # Class distribution info
-    issues.append(Issue(
+    issues.append(DiagnosticIssue(
         id="target-class-distribution",
         title=(
             f'Target "{target}" has {n_classes} classes. '
@@ -149,7 +149,7 @@ def _check_classification_target(
 
     # Imbalance check
     if majority_frac >= config.imbalance_critical_threshold:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-severe-imbalance",
             title=(
                 f'Target "{target}" is severely imbalanced --'
@@ -171,7 +171,7 @@ def _check_classification_target(
             confidence=CONFIDENCE_HIGH,
         ))
     elif majority_frac >= config.imbalance_majority_threshold:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-imbalance",
             title=(
                 f'Target "{target}" is imbalanced --'
@@ -194,7 +194,7 @@ def _check_classification_target(
 
     # Binary vs multi-class info
     if n_classes == 1:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-single-class",
             title=f'Target "{target}" has only 1 class -- cannot train a classifier.',
             severity=SEVERITY_CRITICAL,
@@ -212,13 +212,13 @@ def _check_regression_target(
     series: pd.Series,
     target: str,
     config: SanipyConfig,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Check distribution of a regression target."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     # Must be numeric
     if not pd.api.types.is_numeric_dtype(series):
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-not-numeric",
             title=(
                 f'Target "{target}" is not numeric (dtype: {series.dtype}). '
@@ -254,7 +254,7 @@ def _check_regression_target(
                 "Log-transform is not applicable because values are "
                 "not all positive."
             )
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="target-skewness",
             title=f'Regression target "{target}" is highly skewed (skewness={skew:.2f}).',
             severity=SEVERITY_MEDIUM,
@@ -279,7 +279,7 @@ def _check_regression_target(
         n_outliers = int(((series < lower) | (series > upper)).sum())
         if n_outliers > 0:
             frac = n_outliers / len(series)
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id="target-outliers",
                 title=(
                     f'Regression target "{target}" has {n_outliers:,} '

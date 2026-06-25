@@ -1,10 +1,10 @@
-"""Integration tests for check_dataset() end-to-end."""
+"""Integration tests for check_dataset() and scan_dataset() end-to-end."""
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sanipy import check_dataset, SanipyConfig, SanipyReport
+from sanipy import check_dataset, scan_dataset, SanipyConfig, DatasetReport, SanipyReport
 
 
 def test_basic_usage():
@@ -17,6 +17,7 @@ def test_basic_usage():
         "churn": rng.choice([0, 1], 500, p=[0.85, 0.15]),
     })
     report = check_dataset(df, target="churn")
+    assert isinstance(report, DatasetReport)
     assert isinstance(report, SanipyReport)
     assert 0 <= report.score <= 100
     assert len(report) > 0
@@ -31,6 +32,11 @@ def test_basic_usage():
     text = report.summary()
     assert "Sanipy" in text
     assert "churn" in text
+
+    # Verify scan_dataset alias
+    report_scan = scan_dataset(df, target="churn")
+    assert isinstance(report_scan, DatasetReport)
+    assert report_scan.score == report.score
 
 
 def test_regression_task():
@@ -51,7 +57,7 @@ def test_no_target():
         "b": range(100),
     })
     report = check_dataset(df)
-    assert isinstance(report, SanipyReport)
+    assert isinstance(report, DatasetReport)
 
 
 def test_empty_dataframe():

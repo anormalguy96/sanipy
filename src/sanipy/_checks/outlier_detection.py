@@ -5,25 +5,25 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_OUTLIERS,
     CONFIDENCE_MEDIUM,
     SEVERITY_HIGH,
     SEVERITY_INFO,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.dtype import get_numeric_columns
-from sanipy.utils.formatting import pct
+from sanipy._utils.type_detection import get_numeric_columns
+from sanipy._utils.text_formatting import pct
 
 
-def check_outliers(
+def check_outlier_detection(
     df: pd.DataFrame,
     config: SanipyConfig,
     target: str | None = None,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect numeric columns with suspicious outliers (IQR method)."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -65,7 +65,7 @@ def check_outliers(
         else:
             severity = SEVERITY_INFO
 
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id=f"outlier-{col}",
             title=(
                 f'Column "{col}" contains {n_outliers:,} possible outliers '

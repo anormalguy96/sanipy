@@ -1,13 +1,19 @@
-"""Issue data model for Sanipy check results.
-
-Every problem detected by a check is represented as an ``Issue`` instance
-with structured evidence and a human-readable recommendation.
-"""
+"""DiagnosticIssue data model and Severity enum for Sanipy check results."""
 
 from __future__ import annotations
 
+import enum
 from dataclasses import dataclass, field
 from typing import Any
+
+
+class Severity(str, enum.Enum):
+    """Severity levels for dataset issues."""
+    INFO = "info"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 
 # ── Severity levels (ordered low → high) ────────────────────────────
@@ -55,7 +61,7 @@ CATEGORY_PERFORMANCE = "performance"
 
 
 @dataclass
-class Issue:
+class DiagnosticIssue:
     """A single issue detected by a Sanipy check.
 
     Attributes:
@@ -79,8 +85,6 @@ class Issue:
     evidence: dict[str, Any] = field(default_factory=dict)
     recommendation: str = ""
     confidence: str = CONFIDENCE_HIGH
-
-    # ── Helpers ─────────────────────────────────────────────────────
 
     @property
     def penalty(self) -> int:
@@ -107,6 +111,10 @@ class Issue:
 
     def __repr__(self) -> str:  # noqa: D105
         return (
-            f"Issue(id={self.id!r}, severity={self.severity!r}, "
+            f"DiagnosticIssue(id={self.id!r}, severity={self.severity!r}, "
             f"title={self.title!r})"
         )
+
+
+# Backward compatibility alias
+Issue = DiagnosticIssue

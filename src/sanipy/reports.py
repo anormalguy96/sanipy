@@ -1,4 +1,4 @@
-"""SanipyReport — aggregated results from ``check_dataset()``.
+"""DatasetReport — aggregated results from ``check_dataset()``.
 
 The report holds every detected issue, computes a heuristic health score,
 and supports multiple export formats (text, dict, JSON, Markdown).
@@ -10,18 +10,17 @@ import json
 from pathlib import Path
 from typing import Any
 
-from sanipy.issues import (
-    Issue,
+from sanipy.diagnostics import (
+    DiagnosticIssue,
     SEVERITY_CRITICAL,
     SEVERITY_HIGH,
     SEVERITY_INFO,
     SEVERITY_LOW,
     SEVERITY_MEDIUM,
-    SEVERITY_ORDER,
 )
 
 
-class SanipyReport:
+class DatasetReport:
     """Dataset health report produced by :func:`check_dataset`.
 
     Attributes:
@@ -34,7 +33,7 @@ class SanipyReport:
 
     def __init__(
         self,
-        issues: list[Issue],
+        issues: list[DiagnosticIssue],
         dataset_info: dict[str, Any] | None = None,
         task: str | None = None,
         target: str | None = None,
@@ -61,21 +60,21 @@ class SanipyReport:
 
     # ── Filtering helpers ───────────────────────────────────────────
 
-    def issues_by_severity(self, severity: str) -> list[Issue]:
+    def issues_by_severity(self, severity: str) -> list[DiagnosticIssue]:
         """Return issues matching the given severity level."""
         return [i for i in self.issues if i.severity == severity]
 
-    def issues_by_category(self, category: str) -> list[Issue]:
+    def issues_by_category(self, category: str) -> list[DiagnosticIssue]:
         """Return issues matching the given category."""
         return [i for i in self.issues if i.category == category]
 
     @property
-    def critical_issues(self) -> list[Issue]:
+    def critical_issues(self) -> list[DiagnosticIssue]:
         """Shortcut for critical-severity issues."""
         return self.issues_by_severity(SEVERITY_CRITICAL)
 
     @property
-    def high_issues(self) -> list[Issue]:
+    def high_issues(self) -> list[DiagnosticIssue]:
         """Shortcut for high-severity issues."""
         return self.issues_by_severity(SEVERITY_HIGH)
 
@@ -258,7 +257,7 @@ class SanipyReport:
 
     def __repr__(self) -> str:  # noqa: D105
         return (
-            f"SanipyReport(score={self.score}, issues={len(self.issues)}, "
+            f"DatasetReport(score={self.score}, issues={len(self.issues)}, "
             f"task={self.task!r})"
         )
 
@@ -268,3 +267,7 @@ class SanipyReport:
     def __bool__(self) -> bool:  # noqa: D105
         """True if there are any issues."""
         return len(self.issues) > 0
+
+
+# Backward compatibility alias
+SanipyReport = DatasetReport

@@ -38,5 +38,5 @@ print(report.summary())
 for issue in report.issues:
     if issue.severity in ("critical", "high"):
         print(f"  [{issue.severity.upper()}] {issue.title}")
-        print(f"    → {issue.recommendation}")
+        print(f"    -> {issue.recommendation}")
         print()

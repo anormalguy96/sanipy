@@ -5,27 +5,27 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_OVERVIEW,
     CONFIDENCE_HIGH,
     SEVERITY_CRITICAL,
     SEVERITY_INFO,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.dtype import column_type_summary
+from sanipy._utils.type_detection import column_type_summary
 
 
 def check_overview(
     df: pd.DataFrame,
     target: str | None,
     config: SanipyConfig,
-) -> tuple[list[Issue], dict]:
+) -> tuple[list[DiagnosticIssue], dict]:
     """Produce dataset overview info and check for basic problems.
 
     Returns:
         A tuple of (issues, dataset_info_dict).
     """
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     n_rows, n_cols = df.shape
     memory_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
@@ -40,7 +40,7 @@ def check_overview(
 
     # Empty dataset
     if n_rows == 0:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="overview-001",
             title="Dataset is empty (0 rows).",
             severity=SEVERITY_CRITICAL,
@@ -53,7 +53,7 @@ def check_overview(
 
     # Very small dataset
     if n_rows < 30:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="overview-002",
             title=f"Dataset is very small ({n_rows} rows).",
             severity=SEVERITY_INFO,
@@ -68,7 +68,7 @@ def check_overview(
 
     # Target column existence
     if target is not None and target not in df.columns:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="overview-003",
             title=f'Target column "{target}" not found in the dataset.',
             severity=SEVERITY_CRITICAL,
@@ -84,7 +84,7 @@ def check_overview(
 
     # No columns
     if n_cols == 0:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="overview-004",
             title="Dataset has no columns.",
             severity=SEVERITY_CRITICAL,

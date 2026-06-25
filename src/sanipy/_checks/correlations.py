@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_CORRELATION,
     CATEGORY_PERFORMANCE,
     CONFIDENCE_HIGH,
@@ -13,19 +13,19 @@ from sanipy.issues import (
     SEVERITY_HIGH,
     SEVERITY_INFO,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.dtype import get_numeric_columns
+from sanipy._utils.type_detection import get_numeric_columns
 
 
-def check_correlation(
+def check_correlations(
     df: pd.DataFrame,
     config: SanipyConfig,
     target: str | None = None,
     task: str | None = None,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect highly correlated feature pairs and feature-target relationships."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -40,7 +40,7 @@ def check_correlation(
 
     # ── Guard: too many columns ──────────────────────────────────
     if len(feature_cols) > config.max_columns_for_correlation:
-        issues.append(Issue(
+        issues.append(DiagnosticIssue(
             id="correlation-skipped",
             title=(
                 f"Correlation check skipped: dataset has "
@@ -78,7 +78,7 @@ def check_correlation(
 
             abs_corr = abs(float(corr_val))
             if abs_corr >= config.high_correlation_threshold:
-                issues.append(Issue(
+                issues.append(DiagnosticIssue(
                     id=f"correlation-{col_a}-{col_b}",
                     title=(
                         f'Features "{col_a}" and "{col_b}" are highly '
@@ -124,7 +124,7 @@ def check_correlation(
 
             # Moderate-to-high correlation: informational
             if abs_corr >= 0.7:
-                issues.append(Issue(
+                issues.append(DiagnosticIssue(
                     id=f"target-corr-{col}",
                     title=(
                         f'Feature "{col}" has strong correlation with '

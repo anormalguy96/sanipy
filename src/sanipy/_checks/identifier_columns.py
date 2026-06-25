@@ -7,14 +7,14 @@ import re
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_ID_COLUMNS,
     CONFIDENCE_HIGH,
     CONFIDENCE_MEDIUM,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.formatting import pct
+from sanipy._utils.text_formatting import pct
 
 
 # Patterns that strongly suggest an ID column (matched against the full name)
@@ -49,13 +49,13 @@ def _name_looks_like_id(col_name: str, config: SanipyConfig) -> bool:
     return False
 
 
-def check_id_columns(
+def check_identifier_columns(
     df: pd.DataFrame,
     config: SanipyConfig,
     target: str | None = None,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect columns that look like identifiers (IDs)."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -98,7 +98,7 @@ def check_id_columns(
             continue
 
         if is_id:
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id=f"id-column-{col}",
                 title=(
                     f'Column "{col}" looks like an ID column '

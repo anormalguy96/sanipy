@@ -5,22 +5,22 @@ from __future__ import annotations
 import pandas as pd
 
 from sanipy.config import SanipyConfig
-from sanipy.issues import (
+from sanipy.diagnostics import (
     CATEGORY_CARDINALITY,
     CONFIDENCE_HIGH,
     SEVERITY_MEDIUM,
-    Issue,
+    DiagnosticIssue,
 )
-from sanipy.utils.dtype import get_categorical_columns
+from sanipy._utils.type_detection import get_categorical_columns
 
 
-def check_high_cardinality(
+def check_categorical_cardinality(
     df: pd.DataFrame,
     config: SanipyConfig,
     target: str | None = None,
-) -> list[Issue]:
+) -> list[DiagnosticIssue]:
     """Detect categorical columns with many unique values."""
-    issues: list[Issue] = []
+    issues: list[DiagnosticIssue] = []
 
     if df.empty:
         return issues
@@ -35,7 +35,7 @@ def check_high_cardinality(
         n_unique = df[col].nunique(dropna=True)
 
         if n_unique > config.high_cardinality_threshold:
-            issues.append(Issue(
+            issues.append(DiagnosticIssue(
                 id=f"high-cardinality-{col}",
                 title=(
                     f'Column "{col}" has high cardinality '
