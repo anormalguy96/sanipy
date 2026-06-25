@@ -20,7 +20,8 @@ def test_cli_version(capsys):
     assert exit_code == 0 or exit_code == 2  # argparse version might sys.exit
     captured = capsys.readouterr()
     output = captured.out + captured.err
-    assert "0.1.0a3" in output
+    import sanipy
+    assert sanipy.__version__ in output
 
 
 def test_cli_help(capsys):

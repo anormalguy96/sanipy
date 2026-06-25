@@ -20,7 +20,7 @@ Use this checklist to prepare, verify, and publish a new release of **Sanipy**.
    - Verify `CHANGELOG.md` is updated with the new version section, date, and listed improvements.
 
 4. **Version Consistency Check**:
-   - Verify the version string in `pyproject.toml` (e.g. `version = "0.1.0a3"`) matches `__version__` in `src/sanipy/__init__.py`.
+   - Verify the version string in `pyproject.toml` (e.g. `version = "0.1.0a4"`) matches `__version__` in `src/sanipy/__init__.py`.
    - Run the version validation test:
      ```bash
      pytest tests/test_integration.py -k test_version_consistency
@@ -95,7 +95,7 @@ Use this checklist to prepare, verify, and publish a new release of **Sanipy**.
      ```bash
      python -m twine upload --repository testpypi dist/*
      ```
-     *(Use token authentication configured via `~/.pypirc` or input the API token when prompted)*
+     *(Use token authentication configured via a secure `~/.pypirc` or input the API token when prompted. Do NOT hardcode or commit API tokens to git. If a token is ever accidentally shared or exposed, revoke it immediately via your PyPI/TestPyPI dashboard.)*
 
 2. **Verify Staging Installation**:
    - Create a separate clean virtual environment and install the package from TestPyPI:
@@ -126,6 +126,6 @@ Use this checklist to prepare, verify, and publish a new release of **Sanipy**.
 5. **Tag Release in Git**:
    - Create and push a signed/annotated git tag matching the released version:
      ```bash
-     git tag -a v0.1.0a3 -m "Release v0.1.0a3"
-     git push origin v0.1.0a3
+     git tag -a v0.1.0a4 -m "Release v0.1.0a4"
+     git push origin v0.1.0a4
      ```

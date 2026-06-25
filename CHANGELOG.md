@@ -68,4 +68,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive API and CLI test suites under `tests/test_comparison.py`, `tests/test_comparison_edge_cases.py`, and `tests/test_cli_compare.py` (totaling 42 new test cases).
 - Target auto-detection logic in dataset comparison.
 
+## [0.1.0a4] - 2026-06-26
+
+### Changed
+- Corrected README installation guidance for PyPI/TestPyPI readiness.
+- Updated roadmap to mark CLI and train/test comparison as completed.
+- Cleaned stale release-candidate documentation references.
+
+### Security
+- Confirmed no registry tokens or credentials are stored in the repository.
+
+
 

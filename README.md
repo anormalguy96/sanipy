@@ -3,7 +3,7 @@
 [![CI](https://github.com/anormalguy96/sanipy/actions/workflows/ci.yml/badge.svg)](https://github.com/anormalguy96/sanipy/actions)
 ![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0a3-orange)](https://pypi.org/project/sanipy/)
+[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0a4-orange)](https://pypi.org/project/sanipy/)
 
 **Lightweight sanity checks for ML datasets.**
 
@@ -30,17 +30,19 @@ Sanipy takes a different approach:
 
 ## Installation
 
-For now (alpha version), install directly from GitHub:
+### From PyPI
+
+```bash
+pip install sanipy
+```
+
+### From GitHub
 
 ```bash
 pip install git+https://github.com/anormalguy96/sanipy.git@main
 ```
 
-Once published on PyPI, you will be able to install it via:
-
-```bash
-pip install sanipy
-```
+Sanipy is currently in alpha. APIs may change before stable `1.0`.
 
 **Dependencies:** Only `pandas` and `numpy`. That's it.
 
@@ -377,19 +379,22 @@ All warnings use cautious language ("possible issue", "may", "consider"). The go
 
 ## Roadmap
 
-### Beta (planned)
+### Completed
 
-- [x] CLI: `sanipy check data.csv --target churn`
-- [x] Train/test comparison: `compare_train_test(train_df, test_df)`
-- [ ] Simple drift detection (KS test, PSI)
+- [x] Python API: `check_dataset`
+- [x] Python API: `compare_train_test`
+- [x] CLI: `sanipy check`
+- [x] CLI: `sanipy compare`
+- [x] JSON/Markdown export
+- [x] Error handling and config validation
+
+### Planned / Future
+
+- [ ] Lightweight drift metrics (e.g. KS test, PSI)
 - [ ] HTML report export
-- [ ] Polars DataFrame support
-
-### Future
-
+- [ ] Optional richer documentation website
+- [ ] Possible Polars DataFrame support
 - [ ] scikit-learn pipeline integration
-- [ ] GitHub Actions example
-- [ ] Documentation website
 
 ---
 
