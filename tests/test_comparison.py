@@ -168,7 +168,7 @@ def test_exact_row_overlap():
 
     report = compare_train_test(train_df, test_df)
     overlap_issue = next(i for i in report.issues if i.id == "comparison-row-overlap")
-    assert overlap_issue.severity == "high"
+    assert overlap_issue.severity == "low"  # tiny dataset (< 20 rows) → low severity
     assert overlap_issue.evidence["overlapping_rows"] == 1
 
 

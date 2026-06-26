@@ -81,7 +81,7 @@ def check_constant_features(
                     issues.append(DiagnosticIssue(
                         id=f"near-constant-{col}",
                         title=(
-                            f'Column "{col}" is near-constant --'
+                            f'Column "{col}" is near-constant: '
                             f'value "{top_value}" appears in {pct(top_frac)} of rows.'
                         ),
                         severity=SEVERITY_MEDIUM,

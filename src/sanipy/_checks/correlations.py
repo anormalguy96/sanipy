@@ -156,7 +156,7 @@ def check_correlations(
                         },
                         recommendation=(
                             f'"{col}" is strongly correlated with the target. '
-                            "This may be a useful feature -- verify it is not "
+                            "This may be a useful feature: verify it is not "
                             "leaking future information."
                         ),
                         confidence=CONFIDENCE_MEDIUM,

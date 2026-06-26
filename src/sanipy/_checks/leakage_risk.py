@@ -107,7 +107,7 @@ def check_possible_leakage_risk(
             issues.append(DiagnosticIssue(
                 id=f"leakage-{col}",
                 title=(
-                    f'Column "{col}" may cause target leakage --'
+                    f'Column "{col}" may cause target leakage: '
                     f"suspicious name and very high correlation "
                     f"(r={corr_val:.3f}) with target."
                 ),
@@ -133,7 +133,7 @@ def check_possible_leakage_risk(
             issues.append(DiagnosticIssue(
                 id=f"leakage-corr-{col}",
                 title=(
-                    f'Column "{col}" has possible leakage risk --'
+                    f'Column "{col}" has possible leakage risk: '
                     f"very high correlation (r={corr_val:.3f}) with target."
                 ),
                 severity=SEVERITY_MEDIUM,

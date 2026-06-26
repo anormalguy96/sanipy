@@ -747,16 +747,24 @@ def check_row_overlap(
 
     if overlapping_count > 0:
         overlap_pct = overlapping_count / test_rows
-        severity = SEVERITY_HIGH if overlap_pct > 0.01 else SEVERITY_MEDIUM
+        is_tiny = train_rows < 20 and test_rows < 20
+        if is_tiny:
+            severity = SEVERITY_LOW
+        else:
+            severity = SEVERITY_HIGH if overlap_pct > 0.01 else SEVERITY_MEDIUM
+        title = f"Exact row overlap detected: {overlapping_count} test rows appear in training set ({overlap_pct:.2%})."
+        if is_tiny:
+            title += f" Note: small dataset ({test_rows} test rows), this may be expected."
         issues.append(DiagnosticIssue(
             id="comparison-row-overlap",
-            title=f"Exact row overlap detected: {overlapping_count} test rows appear in training set ({overlap_pct:.2%}).",
+            title=title,
             severity=severity,
             category="duplicates",
             evidence={
                 "overlapping_rows": overlapping_count,
                 "overlap_fraction": overlap_pct,
                 "skipped": False,
+                "small_dataset": is_tiny,
             },
             recommendation="Remove overlapping rows from the test set to avoid split leakage and optimistic evaluations.",
         ))
@@ -827,15 +835,21 @@ def check_id_overlap(
 
             if n_overlap > 0:
                 overlap_pct_test = n_overlap / len(test_ids) if len(test_ids) > 0 else 0.0
+                is_tiny = len(train_df) < 20 and len(test_df) < 20
+                severity = SEVERITY_LOW if is_tiny else SEVERITY_MEDIUM
+                title = f"ID-like column '{col}' has {n_overlap} overlapping values between train and test."
+                if is_tiny:
+                    title += f" Note: small dataset, this heuristic may be noisy."
                 issues.append(DiagnosticIssue(
                     id=f"comparison-id-overlap-{col}",
-                    title=f"ID-like column '{col}' has {n_overlap} overlapping values between train and test.",
-                    severity=SEVERITY_MEDIUM,
+                    title=title,
+                    severity=severity,
                     category="id_columns",
                     columns=[col],
                     evidence={
                         "overlapping_values": n_overlap,
                         "overlap_percentage_test": overlap_pct_test,
+                        "small_dataset": is_tiny,
                     },
                     recommendation="Possible entity leakage risk. Manual review recommended.",
                 ))

@@ -172,7 +172,7 @@ def _check_classification_target(
         issues.append(DiagnosticIssue(
             id="target-severe-imbalance",
             title=(
-                f'Target "{target}" is severely imbalanced --'
+                f'Target "{target}" is severely imbalanced: '
                 f'majority class is {pct(majority_frac)}.'
             ),
             severity=SEVERITY_CRITICAL,
@@ -194,7 +194,7 @@ def _check_classification_target(
         issues.append(DiagnosticIssue(
             id="target-imbalance",
             title=(
-                f'Target "{target}" is imbalanced --'
+                f'Target "{target}" is imbalanced: '
                 f'majority class is {pct(majority_frac)}.'
             ),
             severity=SEVERITY_HIGH,
@@ -216,7 +216,7 @@ def _check_classification_target(
     if n_classes == 1:
         issues.append(DiagnosticIssue(
             id="target-single-class",
-            title=f'Target "{target}" has only 1 class -- cannot train a classifier.',
+            title=f'Target "{target}" has only 1 class: cannot train a classifier.',
             severity=SEVERITY_CRITICAL,
             category=CATEGORY_TARGET,
             columns=[target],

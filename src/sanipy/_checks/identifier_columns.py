@@ -64,6 +64,13 @@ def check_identifier_columns(
 
     n_rows = len(df)
 
+    # Minimum row count for reliable uniqueness-based ID detection.
+    # Below this threshold, high uniqueness is expected for normal
+    # numeric or string columns and produces confusing warnings.
+    _min_rows_for_id_check = 20
+
+    is_tiny = n_rows < _min_rows_for_id_check
+
     # Use unique column labels to avoid checking duplicate columns multiple times
     unique_cols = []
     seen = set()
@@ -94,7 +101,11 @@ def check_identifier_columns(
             is_id = True
             confidence = CONFIDENCE_MEDIUM
         elif uniqueness >= config.id_uniqueness_threshold:
-            # High uniqueness but no name match — less confident
+            # High uniqueness but no name match — less confident.
+            # Skip entirely for tiny datasets: high uniqueness is
+            # expected when there are very few rows.
+            if is_tiny:
+                continue
             # Only flag non-numeric or integer columns (strings with many
             # unique values are likely IDs; floats with high uniqueness
             # are just continuous features).
@@ -109,12 +120,22 @@ def check_identifier_columns(
             continue
 
         if is_id:
+            title = (
+                f'Column "{col}" looks like an ID column '
+                f"(uniqueness: {pct(uniqueness)})."
+            )
+            # Add small-dataset qualifier for tiny datasets
+            if is_tiny and not (name_match and uniqueness >= config.id_uniqueness_threshold):
+                title = (
+                    f'Column "{col}" looks like an ID column '
+                    f"(uniqueness: {pct(uniqueness)}). "
+                    f"Note: small dataset ({n_rows} rows), this heuristic may be noisy."
+                )
+                evidence["small_dataset"] = True
+
             issues.append(DiagnosticIssue(
                 id=f"id-column-{col}",
-                title=(
-                    f'Column "{col}" looks like an ID column '
-                    f"(uniqueness: {pct(uniqueness)})."
-                ),
+                title=title,
                 severity=SEVERITY_MEDIUM,
                 category=CATEGORY_ID_COLUMNS,
                 columns=[col],

@@ -1,9 +1,16 @@
-"""Module entrypoint for sanipy. Allows execution via python -m sanipy."""
+"""Run Sanipy as a module.
 
-from __future__ import annotations
+This enables:
 
-import sys
+    python -m sanipy
+    python -m sanipy --help
+    python -m sanipy --version
+    python -m sanipy check ...
+    python -m sanipy compare ...
+"""
+
 from sanipy.cli import main
 
+
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

@@ -3,7 +3,7 @@
 [![CI](https://github.com/anormalguy96/sanipy/actions/workflows/ci.yml/badge.svg)](https://github.com/anormalguy96/sanipy/actions)
 ![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0-orange)](https://pypi.org/project/sanipy/)
+[![PyPI version](https://img.shields.io/pypi/v/sanipy)](https://pypi.org/project/sanipy/)
 
 **Lightweight sanity checks for ML datasets.**
 
@@ -19,12 +19,12 @@ Most data validation tools are powerful but heavy. You need schemas, expectation
 
 Sanipy takes a different approach:
 
-- **One function call** -- `check_dataset(df, target="churn")` -- and you're done.
+- **One function call** — `check_dataset(df, target="churn")` — and you're done.
 - **Zero config required** (but fully configurable).
-- **Human-readable report** -- not HTML dashboards, not JSON walls.
-- **ML-focused heuristics** -- imbalance, leakage, ID columns, encoding warnings.
-- **CPU-friendly** -- no GPU, no heavy models, no large dependencies.
-- **Honest** -- says "possible issue" when uncertain, never overconfident claims.
+- **Human-readable report** — not HTML dashboards, not JSON walls.
+- **ML-focused heuristics** — imbalance, leakage, ID columns, encoding warnings.
+- **CPU-friendly** — no GPU, no heavy models, no large dependencies.
+- **Honest** — says "possible issue" when uncertain, never overconfident claims.
 
 ---
 
@@ -80,7 +80,7 @@ print(report.summary())
 
   [!]  High-Severity Issues
   ---------------------------
-  - Target "churn" is imbalanced -- majority class is 88.1%.
+  - Target "churn" is imbalanced: majority class is 88.1%.
     -> Use stratified train/test split. Consider F1-score or
        ROC-AUC instead of accuracy.
 
@@ -142,6 +142,12 @@ Sanipy does **not**:
 - Generate dashboards
 - Require a GPU
 - Need complex setup
+
+Sanipy uses lightweight heuristics. It does not guarantee that every warning is a real problem.
+
+Sanipy does not clean data automatically and does not train models.
+
+Sanipy is early-stage software. APIs may change before 1.0.
 
 ---
 

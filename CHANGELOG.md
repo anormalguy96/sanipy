@@ -5,6 +5,21 @@ All notable changes to **Sanipy** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-06-26
+
+### Fixed
+- Improved `__main__.py` module entrypoint for reliable `python -m sanipy` execution.
+- Fixed report message formatting: replaced awkward `--` separators with `: ` for cleaner output across all terminals.
+- Fixed README Markdown rendering issues and added clearer heuristic disclaimers.
+- Reduced confusing ID-like column warnings for very small datasets (< 20 rows).
+- Downgraded row overlap and ID overlap severity for tiny datasets in comparison checks.
+
+### Tests
+- Added regression tests for `python -m sanipy --help` and `--version` via subprocess.
+- Added tests verifying no `--` separators remain in diagnostic output titles.
+- Added tests for tiny dataset heuristic behavior (ID columns and comparison overlap).
+- Added public import and backward-compatibility import regression tests.
+
 ## [0.1.0a1] - 2026-06-26
 
 ### Added
