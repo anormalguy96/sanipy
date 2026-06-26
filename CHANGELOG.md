@@ -78,5 +78,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Confirmed no registry tokens or credentials are stored in the repository.
 
+## [0.1.0] - 2026-06-26
+
+### Added
+- First public PyPI release of Sanipy.
+- Dataset sanity diagnostics with `check_dataset`.
+- Train/test split diagnostics with `compare_train_test`.
+- CLI commands: `sanipy check` and `sanipy compare`.
+- JSON and Markdown report exports.
+- Config validation, custom exceptions, and safe execution guards.
+
+### Notes
+- Sanipy is still early-stage software. APIs may change before `1.0`.
+
+
 
 

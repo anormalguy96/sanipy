@@ -3,7 +3,7 @@
 [![CI](https://github.com/anormalguy96/sanipy/actions/workflows/ci.yml/badge.svg)](https://github.com/anormalguy96/sanipy/actions)
 ![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0a4-orange)](https://pypi.org/project/sanipy/)
+[![PyPI version](https://img.shields.io/badge/pypi-v0.1.0-orange)](https://pypi.org/project/sanipy/)
 
 **Lightweight sanity checks for ML datasets.**
 
@@ -30,19 +30,17 @@ Sanipy takes a different approach:
 
 ## Installation
 
-### From PyPI
-
 ```bash
 pip install sanipy
 ```
 
-### From GitHub
+For the latest development version:
 
 ```bash
 pip install git+https://github.com/anormalguy96/sanipy.git@main
 ```
 
-Sanipy is currently in alpha. APIs may change before stable `1.0`.
+Sanipy is currently early-stage software. APIs may change before stable `1.0`.
 
 **Dependencies:** Only `pandas` and `numpy`. That's it.
 
