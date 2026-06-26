@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.jpeg?v=1" alt="Sanipy banner">
+  <img src="assets/banner.jpeg?v=2" alt="Sanipy banner">
 </p>
 
 # Sanipy
