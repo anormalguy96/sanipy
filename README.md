@@ -1,9 +1,15 @@
+<p align="center">
+  <img src="assets/banner.jpeg" alt="Sanipy banner">
+</p>
+
 # Sanipy
 
 [![CI](https://github.com/anormalguy96/sanipy/actions/workflows/ci.yml/badge.svg)](https://github.com/anormalguy96/sanipy/actions)
 ![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PyPI version](https://img.shields.io/pypi/v/sanipy)](https://pypi.org/project/sanipy/)
+
+
 
 **Lightweight sanity checks for ML datasets.**
 
