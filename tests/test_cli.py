@@ -282,3 +282,18 @@ def test_cli_unexpected_error_graceful(tmp_path, capsys, monkeypatch):
 
     with pytest.raises(RuntimeError):
         main(["check", str(csv_path), "--debug"])
+
+
+def test_cli_module_execution():
+    # 23. Test running the CLI as a module (python -m sanipy)
+    import subprocess
+    import sys
+    import sanipy
+    result = subprocess.run(
+        [sys.executable, "-m", "sanipy", "--version"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert sanipy.__version__ in result.stdout or sanipy.__version__ in result.stderr
+
